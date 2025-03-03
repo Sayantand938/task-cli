@@ -1,0 +1,46 @@
+{
+  "name": "task-cli",
+  "version": "1.0.0",
+  "description": "A simple task management CLI",
+  "main": "src/index.js",
+  "type": "module",
+  "bin": {
+    "task": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "task",
+    "cli",
+    "management",
+    "todo",
+    "sqlite"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^9.4.3",
+    "chalk": "^5.4.1",
+    "commander": "^12.0.0",
+    "date-fns": "^4.1.0",
+    "table": "^6.8.1",
+    "uuid": "^9.0.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/your-repo-name.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/your-repo-name/issues"
+  },
+  "homepage": "https://github.com/yourusername/your-repo-name#readme",
+  "files": [
+    "src/",
+    "bin/",
+    "data/",
+    "README.md",
+    "LICENSE"
+  ]
+}
