@@ -12,7 +12,7 @@ program
   .command("add <task>")
   .description("Add a new task")
   .option("--due <date>", "Due date (YYYY-MM-DD)")
-  .option("--urgency <urgency>", "Urgency (low, medium, high, critical)") // Changed option
+  .option("--urgency <urgency>", "Urgency (low, medium, high, critical)")
   .option("--tag <tag>", "Tag for the task")
   .option("--hide <date>", "Hide task until date (YYYY-MM-DD)")
   .action(add);
@@ -21,10 +21,7 @@ program
   .command("list")
   .description("List all tasks")
   .option("--filter <filter-string>", "Filter by 'field:value OR field:value'")
-  .option(
-    "--sort <criteria>",
-    "Sort by criteria (e.g., due:asc, urgency:desc)" //Allow sort by urgency
-  )
+  .option("--sort <criteria>", "Sort by criteria (e.g., due:asc, urgency:desc)")
   .option("--all", "Show all tasks, including hidden ones")
   .action(list);
 
@@ -42,7 +39,7 @@ program
   .description("Edit a task")
   .option("--title <newTitle>", "New task title")
   .option("--due <newDueDate>", "New due date (YYYY-MM-DD)")
-  .option("--urgency <urgency>", "Urgency (low, medium, high, critical)") // Changed option
+  .option("--urgency <urgency>", "Urgency (low, medium, high, critical)")
   .option("--tag <tag>", "Tag for the task")
   .option("--hide <date>", "Hide task until date (YYYY-MM-DD)")
   .action(editTask);

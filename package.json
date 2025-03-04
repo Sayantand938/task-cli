@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "type": "module",
   "bin": {
-    "task": "./src/index.js"
+    "task": "./bin/cli.js"
   },
   "scripts": {
     "start": "node src/index.js",
