@@ -4,18 +4,13 @@ import { db, getISOTimestamp } from "../database/db.js";
 function done(id) {
   try {
     if (!id) {
-      console.error("Error: Task ID is required.");
-      process.exit(1);
+      throw new Error("Task ID is required.");
     }
 
-    // Use parameterized query to prevent SQL injection
-    const task = db
-      .prepare("SELECT * FROM tasks WHERE id LIKE ?")
-      .get(`${id}%`);
+    const task = db.prepare("SELECT * FROM tasks WHERE id = ?").get(id);
 
     if (!task) {
-      console.error(`Error: Task with ID "${id}" not found.`);
-      process.exit(1);
+      throw new Error(`Task with ID "${id}" not found.`);
     }
 
     if (task.status === "done") {
@@ -25,19 +20,18 @@ function done(id) {
 
     // Update the task status and completed_at
     const stmt = db.prepare(
-      "UPDATE tasks SET status = ?, completed_at = ? WHERE id LIKE ?"
+      "UPDATE tasks SET status = ?, completed_at = ? WHERE id = ?"
     );
-    const result = stmt.run("done", getISOTimestamp(), `${id}%`);
+    const result = stmt.run("done", getISOTimestamp(), id);
 
     if (result.changes > 0) {
       console.log(`Task "${id}" marked as done.`);
     } else {
-      console.error(`Error: Failed to update task "${id}".`);
-      process.exit(1);
+      throw new Error(`Failed to update task "${id}".`);
     }
   } catch (error) {
-    console.error("Error marking task as done:", error.message);
-    process.exit(1);
+    console.error("Error marking task as done:", error);
+    throw error;
   }
 }
 

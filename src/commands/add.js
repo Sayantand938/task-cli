@@ -61,8 +61,8 @@ function add(task, options) {
       const status = "pending";
 
       // Parse due and hide dates using a helper function
-      const dueDate = parseDateOption(due, "due");
-      const hideUntilDate = parseDateOption(hide, "hide");
+      const dueDate = parseRelativeDate(due);
+      const hideUntilDate = parseRelativeDate(hide);
 
       // Insert task into database
       db.prepare(
@@ -84,26 +84,6 @@ function add(task, options) {
     console.error("Error adding task:", error.message);
     throw error; // Propagate error to caller
   }
-}
-
-/**
- * Parses a date option (due or hide) and returns a formatted date or null.
- * @param {string|null|undefined} value - The date value to parse.
- * @param {string} fieldName - The name of the field (for error messages).
- * @returns {string|null} The parsed date in YYYY-MM-DD format or null.
- * @throws {Error} If the date format is invalid.
- */
-function parseDateOption(value, fieldName) {
-  if (value === undefined || value === null || value.trim() === "") {
-    return null;
-  }
-  const parsedDate = parseRelativeDate(value);
-  if (!parsedDate || isNaN(new Date(parsedDate).getTime())) {
-    throw new Error(
-      `Invalid ${fieldName} date format. Use YYYY-MM-DD or relative formats (e.g., 'today', 'tomorrow', '+3d', 'next monday').`
-    );
-  }
-  return parsedDate;
 }
 
 export default add;

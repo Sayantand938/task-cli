@@ -3,13 +3,16 @@ import Database from "better-sqlite3";
 import path from "node:path";
 import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from "node:url";
+import { format } from "date-fns";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const dbFilename = fileURLToPath(import.meta.url);
+const dbDirname = path.dirname(dbFilename);
 
-const dbPath = path.join(__dirname, "../../data/task_cli.db");
+// Use path.resolve for cross-platform compatibility
+const dbPath = path.resolve(dbDirname, "../../data/task_cli.db");
 const db = new Database(dbPath);
 
+// Use a migration tool for schema changes (example using db.exec for initial setup)
 db.exec(`
   CREATE TABLE IF NOT EXISTS urgencies (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -55,11 +58,7 @@ function getISOTimestamp() {
 }
 
 function getCurrentDate() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return format(new Date(), "yyyy-MM-dd");
 }
 
 export { db, getISOTimestamp, uuidv4, getCurrentDate };

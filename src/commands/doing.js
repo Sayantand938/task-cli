@@ -4,17 +4,13 @@ import { db } from "../database/db.js";
 function doing(id) {
   try {
     if (!id) {
-      console.error("Error: Task ID is required.");
-      process.exit(1);
+      throw new Error("Task ID is required.");
     }
 
-    const task = db
-      .prepare("SELECT * FROM tasks WHERE id LIKE ?")
-      .get(`${id}%`);
+    const task = db.prepare("SELECT * FROM tasks WHERE id = ?").get(id);
 
     if (!task) {
-      console.error(`Error: Task with ID "${id}" not found.`);
-      process.exit(1);
+      throw new Error(`Task with ID "${id}" not found.`);
     }
 
     if (task.status === "doing") {
@@ -23,18 +19,17 @@ function doing(id) {
     }
 
     // Update only the task status.  Don't modify completed_at here.
-    const stmt = db.prepare("UPDATE tasks SET status = ? WHERE id LIKE ?");
-    const result = stmt.run("doing", `${id}%`);
+    const stmt = db.prepare("UPDATE tasks SET status = ? WHERE id = ?");
+    const result = stmt.run("doing", id);
 
     if (result.changes > 0) {
       console.log(`Task "${id}" is now in progress.`);
     } else {
-      console.error(`Error: Failed to update task "${id}".`);
-      process.exit(1);
+      throw new Error(`Failed to update task "${id}".`);
     }
   } catch (error) {
-    console.error("Error marking task as in progress:", error.message);
-    process.exit(1);
+    console.error("Error marking task as in progress:", error);
+    throw error;
   }
 }
 
