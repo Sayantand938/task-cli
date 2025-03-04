@@ -4,30 +4,33 @@ import path from "node:path";
 import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from "node:url";
 import { format } from "date-fns";
+import { logError } from "../utils/logUtils.js"; // Import for error logging
 
 const dbFilename = fileURLToPath(import.meta.url);
 const dbDirname = path.dirname(dbFilename);
 
-// Use path.resolve for cross-platform compatibility
 const dbPath = path.resolve(dbDirname, "../../data/task_cli.db");
-const db = new Database(dbPath);
 
-// Use a migration tool for schema changes (example using db.exec for initial setup)
+let db;
+try {
+  db = new Database(dbPath);
+} catch (error) {
+  logError("Failed to connect to the database:", error);
+  process.exit(1); // Exit on database connection failure
+}
+
+// Use a migration tool for schema changes
 db.exec(`
   CREATE TABLE IF NOT EXISTS urgencies (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE
   );
-`);
 
-db.exec(`
   CREATE TABLE IF NOT EXISTS tags (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE
   );
-`);
 
-db.exec(`
   CREATE TABLE IF NOT EXISTS tasks (
     id TEXT PRIMARY KEY,
     created_at TEXT NOT NULL,
@@ -43,7 +46,6 @@ db.exec(`
   )
 `);
 
-// Seed the urgencies table if it's empty.
 const urgencies = ["critical", "high", "medium", "low"];
 const insertUrgency = db.prepare("INSERT INTO urgencies (name) VALUES (?)");
 const checkUrgencies = db.prepare("SELECT COUNT(*) as count FROM urgencies");

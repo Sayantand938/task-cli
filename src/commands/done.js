@@ -1,5 +1,6 @@
 // --- src/commands/done.js ---
 import { db, getISOTimestamp } from "../database/db.js";
+import { logError } from "../utils/logUtils.js";
 
 function done(id) {
   try {
@@ -15,10 +16,9 @@ function done(id) {
 
     if (task.status === "done") {
       console.log(`Task "${id}" is already marked as done.`);
-      return; // Exit early if already done
+      return true; // Already done, consider it a success
     }
 
-    // Update the task status and completed_at
     const stmt = db.prepare(
       "UPDATE tasks SET status = ?, completed_at = ? WHERE id = ?"
     );
@@ -26,12 +26,13 @@ function done(id) {
 
     if (result.changes > 0) {
       console.log(`Task "${id}" marked as done.`);
+      return true; // Return true for success
     } else {
       throw new Error(`Failed to update task "${id}".`);
     }
   } catch (error) {
-    console.error("Error marking task as done:", error);
-    throw error;
+    logError("Error marking task as done:", error);
+    throw error; // Consistent error handling
   }
 }
 

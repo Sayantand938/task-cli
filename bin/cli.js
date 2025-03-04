@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-
+// --- bin/cli.js ---
 import { program } from "commander";
 import add from "../src/commands/add.js";
 import list from "../src/commands/list.js";

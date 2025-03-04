@@ -4,11 +4,11 @@ import { table, getBorderCharacters } from "table";
 import chalk from "chalk";
 import { format, startOfDay } from "date-fns";
 import { parseDateOption } from "../utils/validationUtils.js";
+import { logError } from "../utils/logUtils.js";
 
-// Constants for extensibility
 const VALID_SORT_FIELDS = {
   due: "tasks.due",
-  urgency: "u.id", // Changed from priority to urgency
+  urgency: "u.id",
 };
 const VALID_SORT_DIRECTIONS = ["asc", "desc"];
 const STATUS_COLORS = {
@@ -17,9 +17,6 @@ const STATUS_COLORS = {
   done: chalk.bold.green,
 };
 
-/**
- * Builds a SQL query for listing tasks based on options.
- */
 function buildTaskQuery({ filter, sort, all }) {
   let query = `
     SELECT tasks.id, tasks.title, tasks.due, tasks.status, u.name as urgency, t.name as tag, tasks.hide_until
@@ -48,7 +45,7 @@ function buildTaskQuery({ filter, sort, all }) {
     query += ` WHERE ${conditions.join(" AND ")}`;
   }
 
-  let orderBy = "u.id ASC NULLS LAST"; // Default sort by urgency
+  let orderBy = "u.id ASC NULLS LAST";
   if (sort) {
     const [field, direction = "asc"] = sort.split(":");
     const sqlField = VALID_SORT_FIELDS[field];
@@ -67,10 +64,6 @@ function buildTaskQuery({ filter, sort, all }) {
   return { query, params };
 }
 
-/**
- * Lists tasks based on provided filters and sorting options.
- * @returns {boolean} Success status
- */
 function list(options) {
   try {
     const { query, params } = buildTaskQuery(options);
@@ -83,7 +76,7 @@ function list(options) {
 
     const headers = options.all
       ? ["ID", "Title", "Due Date", "Status", "Urgency", "Tag", "Hide Until"]
-      : ["ID", "Title", "Due Date", "Status", "Urgency", "Tag"]; // Changed header
+      : ["ID", "Title", "Due Date", "Status", "Urgency", "Tag"];
     const data = [headers];
     const currentDate = startOfDay(new Date());
 
@@ -93,12 +86,12 @@ function list(options) {
 
     const columnConfig = {
       columns: {
-        0: { alignment: "center" }, // ID
-        2: { alignment: "center" }, // Due Date
-        3: { alignment: "center" }, // Status
-        4: { alignment: "center" }, // Urgency
-        5: { alignment: "center" }, // Tag
-        ...(options.all ? { 6: { alignment: "center" } } : {}), // Hide Until
+        0: { alignment: "center" },
+        2: { alignment: "center" },
+        3: { alignment: "center" },
+        4: { alignment: "center" },
+        5: { alignment: "center" },
+        ...(options.all ? { 6: { alignment: "center" } } : {}),
       },
       border: getBorderCharacters("norc"),
     };
@@ -106,28 +99,20 @@ function list(options) {
     console.log(table(data, columnConfig));
     return true;
   } catch (error) {
-    console.error("Error listing tasks:", error);
-    return false;
+    logError("Error listing tasks:", error);
+    return false; // Return false on error
   }
 }
 
-/**
- * Recursively parses a filter string into a SQL WHERE clause and parameters.
- * @param {string} filterStr Filter string (e.g., "status:done AND due:today")
- * @returns {[string, any[]]} SQL WHERE clause and parameters
- */
 function parseFilter(filterStr) {
   const params = [];
   let trimmedStr = filterStr.trim();
-
-  // Remove surrounding parentheses
   trimmedStr = trimmedStr.replace(/^\((.*)\)$/, "$1");
 
-  // Supported filter fields and their SQL mappings
   const filterFields = {
     title: (value) => {
       params.push(value);
-      return "tasks.title = ?"; // Use exact match for title
+      return "tasks.title = ?";
     },
     urgency: (value) => {
       params.push(value.toLowerCase());
@@ -149,7 +134,7 @@ function parseFilter(filterStr) {
     },
     id: (value) => {
       params.push(value);
-      return "tasks.id = ?"; // Use exact match for ID
+      return "tasks.id = ?";
     },
   };
 
@@ -168,28 +153,24 @@ function parseFilter(filterStr) {
   }
 
   const [field, value] = trimmedStr.split(":");
-  if (!field || !value || !filterFields[field]) {
+  if (!field || !value) {
+    throw new Error(`Invalid filter format.  Must be 'field:value'`);
+  }
+  if (!filterFields[field]) {
     throw new Error(
-      `Invalid filter: '${trimmedStr}'. Use 'field:value' (fields: ${Object.keys(
+      `Invalid filter field: ${field}.  Valid fields: ${Object.keys(
         filterFields
-      ).join(", ")})`
+      ).join(", ")}`
     );
   }
   return [filterFields[field](value.trim()), params];
 }
 
-/**
- * Formats a task row for display.
- * @param {object} task Task data
- * @param {Date} currentDate Current date for comparison
- * @param {boolean} showAll Include hide_until column
- * @returns {string[]} Formatted row
- */
 function formatTaskRow(task, currentDate, showAll) {
   const id = chalk.dim(task.id.substring(0, 8));
-  const urgency = task.urgency || "-"; // Changed variable name
+  const urgency = task.urgency || "-";
   const formattedUrgency =
-    urgency.toLowerCase() === "critical" ? chalk.inverse(urgency) : urgency; // and here
+    urgency.toLowerCase() === "critical" ? chalk.inverse(urgency) : urgency;
   const formattedStatus =
     STATUS_COLORS[task.status]?.(task.status) || task.status;
 
@@ -206,7 +187,7 @@ function formatTaskRow(task, currentDate, showAll) {
     task.title,
     dueDate,
     formattedStatus,
-    formattedUrgency, // and here
+    formattedUrgency,
     task.tag || "-",
   ];
   if (showAll) row.push(task.hide_until || "-");

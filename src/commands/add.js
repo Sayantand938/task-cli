@@ -1,14 +1,12 @@
 // --- src/commands/add.js ---
 import { db, getISOTimestamp, uuidv4 } from "../database/db.js";
 import { parseRelativeDate } from "../utils/dateUtils.js";
+import { logError } from "../utils/logUtils.js";
 
 /**
- * Adds a new task to the database with the specified options.
- * @param {string} task - The task description.
- * @param {Object} options - Options for due date, urgency, tag, and hide until date.
- * @throws {Error} If task creation fails due to invalid input or database errors.
+ * Adds a new task to the database.
  */
-function add(task, options) {
+async function add(task, options) {
   try {
     if (!task || task.trim() === "") {
       throw new Error("Task description is required.");
@@ -16,8 +14,7 @@ function add(task, options) {
 
     const { due, urgency, tag, hide } = options;
 
-    db.transaction(() => {
-      // Urgency validation
+    return db.transaction(() => {
       let urgencyId = null;
       if (urgency !== undefined) {
         const urgencyValue = db
@@ -36,7 +33,6 @@ function add(task, options) {
         urgencyId = urgencyValue.id;
       }
 
-      // Tag validation and insertion
       let tagId = null;
       if (tag !== undefined) {
         const tagName = tag.toLowerCase();
@@ -54,17 +50,13 @@ function add(task, options) {
               .lastInsertRowid;
       }
 
-      // Task metadata
       const taskId = uuidv4();
       const createdAt = getISOTimestamp();
       const title = task.trim();
       const status = "pending";
+      let dueDate = due ? parseRelativeDate(due) : null;
+      let hideUntilDate = hide ? parseRelativeDate(hide) : null;
 
-      // Parse due and hide dates using a helper function
-      const dueDate = parseRelativeDate(due);
-      const hideUntilDate = parseRelativeDate(hide);
-
-      // Insert task into database
       db.prepare(
         "INSERT INTO tasks (id, created_at, title, due, status, urgency_id, tag_id, hide_until) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
       ).run(
@@ -79,10 +71,11 @@ function add(task, options) {
       );
 
       console.log(`Task "${title}" added successfully with ID: ${taskId}`);
+      return taskId; // Return the taskId
     })();
   } catch (error) {
-    console.error("Error adding task:", error.message);
-    throw error; // Propagate error to caller
+    logError("Error adding task:", error);
+    throw error;
   }
 }
 

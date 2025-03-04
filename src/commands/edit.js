@@ -1,13 +1,8 @@
 // --- src/commands/edit.js ---
 import { db } from "../database/db.js";
 import { validateTagName, parseDateOption } from "../utils/validationUtils.js";
+import { logError } from "../utils/logUtils.js";
 
-/**
- * Edits an existing task in the database based on the provided ID (or prefix) and options.
- * @param {string} id - The ID (or prefix) of the task to edit.
- * @param {Object} options - Options for updating title, due date, urgency, tag, and hide until date.
- * @throws {Error} If task editing fails due to invalid input or database errors.
- */
 function editTask(id, options) {
   try {
     if (!id || id.trim() === "") {
@@ -15,9 +10,7 @@ function editTask(id, options) {
     }
     const taskId = id.trim();
 
-    // Database transaction
-    db.transaction(() => {
-      // Check if task exists
+    return db.transaction(() => {
       const task = db.prepare("SELECT * FROM tasks WHERE id = ?").get(taskId);
       if (!task) {
         throw new Error(`Task with ID "${taskId}" not found.`);
@@ -98,13 +91,15 @@ function editTask(id, options) {
         const stmt = db.prepare(sql);
         stmt.run(...values);
         console.log(`Task "${taskId}" updated successfully.`);
+        return true; // Return true for success
       } else {
         console.log(`No changes provided for task "${taskId}".`);
+        return true; // No changes, but still successful
       }
     })();
   } catch (error) {
-    console.error("Error editing task:", error);
-    throw error;
+    logError("Error editing task:", error);
+    throw error; // Consistent error handling
   }
 }
 

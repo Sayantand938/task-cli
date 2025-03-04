@@ -4,9 +4,6 @@ import { parseRelativeDate } from "./dateUtils.js";
 
 /**
  * Validates a tag name.
- * @param {string} tagName - The tag name to validate.
- * @returns {boolean} True if the tag name is valid, false otherwise.
- * @throws {Error} If the tag name is invalid.
  */
 export function validateTagName(tagName) {
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(tagName)) {
@@ -18,11 +15,7 @@ export function validateTagName(tagName) {
 }
 
 /**
- * Parses a date option (due or hide) and returns a formatted date or null.
- * @param {string|null|undefined} value - The date value to parse.
- * @param {string} fieldName - The name of the field (for error messages).
- * @returns {string|null} The parsed date in YYYY-MM-DD format or null.
- * @throws {Error} If the date format is invalid.
+ * Parses a date option (due or hide).
  */
 export function parseDateOption(value, fieldName) {
   if (value === undefined || value === null || value.trim() === "") {
