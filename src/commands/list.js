@@ -1,6 +1,6 @@
 // --- src/commands/list.js ---
 import { db } from "../database/db.js";
-import { table, getBorderCharacters } from "table";
+import Table from "cli-table3";
 import chalk from "chalk";
 import { format, startOfDay } from "date-fns";
 import { parseDateOption } from "../utils/validationUtils.js";
@@ -70,37 +70,62 @@ function list(options) {
     const tasks = db.prepare(query).all(params);
 
     if (tasks.length === 0) {
-      console.log("No tasks found.");
+      console.log(chalk.yellow("No tasks found."));
       return true;
     }
 
     const headers = options.all
       ? ["ID", "Title", "Due Date", "Status", "Urgency", "Tag", "Hide Until"]
       : ["ID", "Title", "Due Date", "Status", "Urgency", "Tag"];
-    const data = [headers];
+
+    const table = new Table({
+      head: headers.map((header) => chalk.bold.white(header)),
+      style: {
+        head: [],
+        border: ["white"],
+        compact: false,
+      },
+      colAligns: [
+        "center",
+        "left",
+        "center",
+        "center",
+        "center",
+        "center",
+        ...(options.all ? ["center"] : []),
+      ],
+      chars: {
+        top: "═",
+        "top-mid": "╤",
+        "top-left": "╔",
+        "top-right": "╗",
+        bottom: "═",
+        "bottom-mid": "╧",
+        "bottom-left": "╚",
+        "bottom-right": "╝",
+        left: "║",
+        "left-mid": "╟",
+        mid: "─",
+        "mid-mid": "┼",
+        right: "║",
+        "right-mid": "╢",
+        middle: "│",
+      },
+    });
+
     const currentDate = startOfDay(new Date());
 
     tasks.forEach((task) => {
-      data.push(formatTaskRow(task, currentDate, options.all));
+      table.push(formatTaskRow(task, currentDate, options.all));
     });
 
-    const columnConfig = {
-      columns: {
-        0: { alignment: "center" },
-        2: { alignment: "center" },
-        3: { alignment: "center" },
-        4: { alignment: "center" },
-        5: { alignment: "center" },
-        ...(options.all ? { 6: { alignment: "center" } } : {}),
-      },
-      border: getBorderCharacters("norc"),
-    };
-
-    console.log(table(data, columnConfig));
+    console.log(); // Blank line before
+    console.log(table.toString());
+    console.log(); // Blank line after
     return true;
   } catch (error) {
     logError("Error listing tasks:", error);
-    return false; // Return false on error
+    return false;
   }
 }
 
@@ -170,7 +195,9 @@ function formatTaskRow(task, currentDate, showAll) {
   const id = chalk.dim(task.id.substring(0, 8));
   const urgency = task.urgency || "-";
   const formattedUrgency =
-    urgency.toLowerCase() === "critical" ? chalk.inverse(urgency) : urgency;
+    urgency.toLowerCase() === "critical"
+      ? chalk.bgRed.white.bold(urgency)
+      : chalk.yellow(urgency);
   const formattedStatus =
     STATUS_COLORS[task.status]?.(task.status) || task.status;
 
@@ -178,19 +205,19 @@ function formatTaskRow(task, currentDate, showAll) {
   if (task.due) {
     const parsedDueDate = startOfDay(new Date(task.due));
     if (parsedDueDate < currentDate && task.status !== "done") {
-      dueDate = chalk.bgRed(dueDate);
+      dueDate = chalk.bgRed.white.bold(dueDate);
     }
   }
 
   const row = [
     id,
-    task.title,
+    chalk.white(task.title),
     dueDate,
     formattedStatus,
     formattedUrgency,
     task.tag || "-",
   ];
-  if (showAll) row.push(task.hide_until || "-");
+  if (showAll) row.push(chalk.gray(task.hide_until || "-"));
   return row;
 }
 
